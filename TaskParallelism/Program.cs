@@ -12,12 +12,13 @@ namespace TaskParallelism
     {
         static void Main(string[] args)
         {
-            string fileName = "tasks.json";
+            //string fileName = "tasks.json";
 
             Dictionary<string, int> spawTasks = new Dictionary<string, int>();
             Dictionary<string, int> sequenceTasks = new Dictionary<string, int>();
 
-            JObject obj = JObject.Parse(File.ReadAllText(fileName));
+            //JObject obj = JObject.Parse(File.ReadAllText(fileName));
+            JObject obj = JObject.Parse(File.ReadAllText(args[0]));
 
             var spawList = obj["Spaw"].ToList<JToken>();
             var sequenceList = obj["Spaw"]["Sequence"].ToList<JToken>();
@@ -37,7 +38,6 @@ namespace TaskParallelism
             foreach (var item in sequenceList)
             {
                 JProperty property = item.ToObject<JProperty>();
-
                 sequenceTasks[property.Name] = (int)property.Value;
             }
 
@@ -78,7 +78,6 @@ namespace TaskParallelism
                         Console.WriteLine($"{item.Key} end");
                     });
                 }
-
             });
 
             Console.ReadKey();

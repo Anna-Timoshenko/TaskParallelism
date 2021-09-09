@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
@@ -29,50 +28,49 @@ namespace TaskParallelism
 
                 if (property.Name == "Sequence")
                 {
+                    var sequenceBufList = property.ToList<JToken>();
+
+                    foreach (var seq in sequenceList)
+                    {
+                        JProperty propertySeq = seq.ToObject<JProperty>();
+                        sequenceTasks[propertySeq.Name] = (int)propertySeq.Value;
+                    }
+
                     continue;
                 }
 
                 spawTasks[property.Name] = (int)property.Value;
             }
 
-            foreach (var item in sequenceList)
-            {
-                JProperty property = item.ToObject<JProperty>();
-                sequenceTasks[property.Name] = (int)property.Value;
-            }
-
             Task.Factory.StartNew(() => {
 
                 foreach (var item in spawTasks)
                 {
-                     Task.Factory.StartNew(() => {
+                     Task.Run(async () => {
                         Console.WriteLine($"{item.Key} start");
 
                         for (int i = item.Value; i >= 0; --i)
                         {
                             Console.WriteLine($"{item.Key} {i}");
-                            //await Task.Delay(TimeSpan.FromSeconds(1));
-                            Thread.Sleep(1000);
+                            await Task.Delay(TimeSpan.FromSeconds(1));
                         }
 
                         Console.WriteLine($"{item.Key} end");
                     });
                 }
-
             });
 
             Task.Factory.StartNew(async () => {
 
                 foreach (var item in sequenceTasks)
                 {
-                    await Task.Factory.StartNew(() => {
+                    await Task.Run(async () => {
                         Console.WriteLine($"{item.Key} start");
 
                         for (int i = item.Value; i >= 0; --i)
                         {
                             Console.WriteLine($"{item.Key} {i}");
-                            //await Task.Delay(TimeSpan.FromSeconds(1));
-                            Thread.Sleep(1000);
+                            await Task.Delay(TimeSpan.FromSeconds(1));
                         }
 
                         Console.WriteLine($"{item.Key} end");

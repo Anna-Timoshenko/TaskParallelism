@@ -22,14 +22,12 @@ namespace TaskParallelism
             var spawList = obj["Spaw"].ToList<JToken>();
             var sequenceList = obj["Spaw"]["Sequence"].ToList<JToken>();
 
-            foreach (var item in spawList)
+            foreach (var spaw in spawList)
             {
-                JProperty property = item.ToObject<JProperty>();
+                JProperty property = spaw.ToObject<JProperty>();
 
                 if (property.Name == "Sequence")
                 {
-                    var sequenceBufList = property.ToList<JToken>();
-
                     foreach (var seq in sequenceList)
                     {
                         JProperty propertySeq = seq.ToObject<JProperty>();

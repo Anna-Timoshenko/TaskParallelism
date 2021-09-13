@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
@@ -11,101 +10,89 @@ namespace TaskParallelism
     {
         static void Main(string[] args)
         {
-            string fileName = "tasks.json";
+            //string jObjectString = File.ReadAllText("tasks.json");
+            string jObjectString = File.ReadAllText(args[0]);
+            JObject obj = JObject.Parse(jObjectString);
 
-            Dictionary<string, int> spawTasks = new Dictionary<string, int>();
-            Dictionary<string, int> sequenceTasks = new Dictionary<string, int>();
-
-            JObject obj = JObject.Parse(File.ReadAllText(fileName));
-            //JObject obj = JObject.Parse(File.ReadAllText(args[0]));
-
-            #region List
-
-            //var spawList = obj["Spaw"].ToList<JToken>();
-            //var sequenceList = obj["Spaw"]["Sequence"].ToList<JToken>();
-
-            //foreach (var spaw in spawList)
-            //{
-            //    JProperty property = spaw.ToObject<JProperty>();
-
-            //    if (property.Name == "Sequence")
-            //    {
-            //        foreach (var seq in sequenceList)
-            //        {
-            //            JProperty propertySeq = seq.ToObject<JProperty>();
-            //            sequenceTasks[propertySeq.Name] = (int)propertySeq.Value;
-            //        }
-
-            //        continue;
-            //    }
-
-            //    spawTasks[property.Name] = (int)property.Value;
-            //}
-
-            //Task.Run(() =>
-            //{
-            //    foreach (var item in spawTasks)
-            //    {
-            //        Task.Run(async () =>
-            //        {
-            //            Console.WriteLine($"{item.Key} start");
-
-            //            for (int i = item.Value; i >= 0; --i)
-            //            {
-            //                Console.WriteLine($"{item.Key} {i}");
-            //                await Task.Delay(TimeSpan.FromSeconds(1));
-            //            }
-
-            //            Console.WriteLine($"{item.Key} end");
-            //        });
-            //    }
-            //});
-
-            //Task.Run(async () =>
-            //{
-            //    foreach (var item in sequenceTasks)
-            //    {
-            //        await Task.Run(async () =>
-            //        {
-            //            Console.WriteLine($"{item.Key} start");
-
-            //            for (int i = item.Value; i >= 0; --i)
-            //            {
-            //                Console.WriteLine($"{item.Key} {i}");
-            //                await Task.Delay(TimeSpan.FromSeconds(1));
-            //            }
-
-            //            Console.WriteLine($"{item.Key} end");
-            //        });
-            //    }
-            //});
-
-            #endregion
-
-            Fu(obj);
+            RunTasks(obj);
 
             Console.ReadKey();
         }
 
-        static void Fu(JObject obj)
+        static async void RunTasks(JObject obj)
+        {
+            Dictionary<string, int> spaws = new Dictionary<string, int>();
+            Dictionary<string, int> sequences = new Dictionary<string, int>();
+
+            ParseTreeJObject(obj, spaws, sequences);
+
+            foreach (var spaw in spaws)
+            {
+                TaskParallel(spaw.Key, spaw.Value);
+            }
+
+            foreach (var sequence in sequences)
+            {
+                await Task.Run(async () => await TaskSuccessivelyAsync(sequence.Key, sequence.Value));
+            }
+        }
+
+        static void ParseTreeJObject(JObject obj, Dictionary<string, int> spaw, Dictionary<string, int> seq, string nameParent = null)
         {
             JToken i;
 
             foreach (var k in obj)
             {
                 i = obj[k.Key];
+                var prop = (JProperty)i.Parent;
 
                 if (i.Type.ToString() == "Integer")
                 {
-                    Console.WriteLine(i);
+                    if (nameParent == "Sequence")
+                    {
+                        seq[prop.Name] = (int)i;
+                        continue;
+                    }
+
+                    spaw[prop.Name] = (int)i;
                 }
                 else if (i.Type.ToString() == "Object")
                 {
-                    Console.WriteLine(i.Type);
-                    Fu((JObject)i);
+                    ParseTreeJObject((JObject)i, spaw, seq, prop.Name);
+                }
+            }
+        }
+
+        static void TaskParallel(string name, int sec)
+        {
+            Task.Run(async () =>
+            {
+                Console.WriteLine($"{name} start");
+
+                for (int i = sec; i >= 0; --i)
+                {
+                    Console.WriteLine($"{name} {i}");
+                    await Task.Delay(TimeSpan.FromSeconds(1));
                 }
 
-            }
+                Console.WriteLine($"{name} end");
+            });
+        }
+
+        static async Task TaskSuccessivelyAsync(string name, int sec)
+        {
+            await Task.Run(async () =>
+            {
+                Console.WriteLine($"{name} start");
+
+                for (int i = sec; i >= 0; --i)
+                {
+                    Console.WriteLine($"{name} {i}");
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+                }
+
+                Console.WriteLine($"{name} end");
+            });
         }
     }
 }

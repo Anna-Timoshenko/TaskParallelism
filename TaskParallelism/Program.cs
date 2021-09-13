@@ -11,72 +11,101 @@ namespace TaskParallelism
     {
         static void Main(string[] args)
         {
-            //string fileName = "tasks.json";
+            string fileName = "tasks.json";
 
             Dictionary<string, int> spawTasks = new Dictionary<string, int>();
             Dictionary<string, int> sequenceTasks = new Dictionary<string, int>();
 
-            //JObject obj = JObject.Parse(File.ReadAllText(fileName));
-            JObject obj = JObject.Parse(File.ReadAllText(args[0]));
+            JObject obj = JObject.Parse(File.ReadAllText(fileName));
+            //JObject obj = JObject.Parse(File.ReadAllText(args[0]));
 
-            var spawList = obj["Spaw"].ToList<JToken>();
-            var sequenceList = obj["Spaw"]["Sequence"].ToList<JToken>();
+            #region List
 
-            foreach (var spaw in spawList)
-            {
-                JProperty property = spaw.ToObject<JProperty>();
+            //var spawList = obj["Spaw"].ToList<JToken>();
+            //var sequenceList = obj["Spaw"]["Sequence"].ToList<JToken>();
 
-                if (property.Name == "Sequence")
-                {
-                    foreach (var seq in sequenceList)
-                    {
-                        JProperty propertySeq = seq.ToObject<JProperty>();
-                        sequenceTasks[propertySeq.Name] = (int)propertySeq.Value;
-                    }
+            //foreach (var spaw in spawList)
+            //{
+            //    JProperty property = spaw.ToObject<JProperty>();
 
-                    continue;
-                }
+            //    if (property.Name == "Sequence")
+            //    {
+            //        foreach (var seq in sequenceList)
+            //        {
+            //            JProperty propertySeq = seq.ToObject<JProperty>();
+            //            sequenceTasks[propertySeq.Name] = (int)propertySeq.Value;
+            //        }
 
-                spawTasks[property.Name] = (int)property.Value;
-            }
+            //        continue;
+            //    }
 
-            Task.Factory.StartNew(() => {
+            //    spawTasks[property.Name] = (int)property.Value;
+            //}
 
-                foreach (var item in spawTasks)
-                {
-                     Task.Run(async () => {
-                        Console.WriteLine($"{item.Key} start");
+            //Task.Run(() =>
+            //{
+            //    foreach (var item in spawTasks)
+            //    {
+            //        Task.Run(async () =>
+            //        {
+            //            Console.WriteLine($"{item.Key} start");
 
-                        for (int i = item.Value; i >= 0; --i)
-                        {
-                            Console.WriteLine($"{item.Key} {i}");
-                            await Task.Delay(TimeSpan.FromSeconds(1));
-                        }
+            //            for (int i = item.Value; i >= 0; --i)
+            //            {
+            //                Console.WriteLine($"{item.Key} {i}");
+            //                await Task.Delay(TimeSpan.FromSeconds(1));
+            //            }
 
-                        Console.WriteLine($"{item.Key} end");
-                    });
-                }
-            });
+            //            Console.WriteLine($"{item.Key} end");
+            //        });
+            //    }
+            //});
 
-            Task.Factory.StartNew(async () => {
+            //Task.Run(async () =>
+            //{
+            //    foreach (var item in sequenceTasks)
+            //    {
+            //        await Task.Run(async () =>
+            //        {
+            //            Console.WriteLine($"{item.Key} start");
 
-                foreach (var item in sequenceTasks)
-                {
-                    await Task.Run(async () => {
-                        Console.WriteLine($"{item.Key} start");
+            //            for (int i = item.Value; i >= 0; --i)
+            //            {
+            //                Console.WriteLine($"{item.Key} {i}");
+            //                await Task.Delay(TimeSpan.FromSeconds(1));
+            //            }
 
-                        for (int i = item.Value; i >= 0; --i)
-                        {
-                            Console.WriteLine($"{item.Key} {i}");
-                            await Task.Delay(TimeSpan.FromSeconds(1));
-                        }
+            //            Console.WriteLine($"{item.Key} end");
+            //        });
+            //    }
+            //});
 
-                        Console.WriteLine($"{item.Key} end");
-                    });
-                }
-            });
+            #endregion
+
+            Fu(obj);
 
             Console.ReadKey();
+        }
+
+        static void Fu(JObject obj)
+        {
+            JToken i;
+
+            foreach (var k in obj)
+            {
+                i = obj[k.Key];
+
+                if (i.Type.ToString() == "Integer")
+                {
+                    Console.WriteLine(i);
+                }
+                else if (i.Type.ToString() == "Object")
+                {
+                    Console.WriteLine(i.Type);
+                    Fu((JObject)i);
+                }
+
+            }
         }
     }
 }

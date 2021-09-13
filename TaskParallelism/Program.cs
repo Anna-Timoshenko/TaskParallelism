@@ -13,31 +13,14 @@ namespace TaskParallelism
             //string jObjectString = File.ReadAllText("tasks.json");
             string jObjectString = File.ReadAllText(args[0]);
             JObject obj = JObject.Parse(jObjectString);
+            List<Task> tasks = new List<Task>();
 
-            RunTasks(obj);
+            RunTasks(obj, tasks);
 
             Console.ReadKey();
         }
 
-        static async void RunTasks(JObject obj)
-        {
-            Dictionary<string, int> spaws = new Dictionary<string, int>();
-            Dictionary<string, int> sequences = new Dictionary<string, int>();
-
-            ParseTreeJObject(obj, spaws, sequences);
-
-            foreach (var spaw in spaws)
-            {
-                TaskParallel(spaw.Key, spaw.Value);
-            }
-
-            foreach (var sequence in sequences)
-            {
-                await Task.Run(async () => await TaskSuccessivelyAsync(sequence.Key, sequence.Value));
-            }
-        }
-
-        static void ParseTreeJObject(JObject obj, Dictionary<string, int> spaw, Dictionary<string, int> seq, string nameParent = null)
+        static async void RunTasks(JObject obj, List<Task> tasks, string nameParent = null)
         {
             JToken i;
 
@@ -50,15 +33,16 @@ namespace TaskParallelism
                 {
                     if (nameParent == "Sequence")
                     {
-                        seq[prop.Name] = (int)i;
+                        Task.WaitAll(tasks.ToArray());
+                        await Task.Run(async () => await TaskSuccessivelyAsync(prop.Name, (int)i));
                         continue;
                     }
 
-                    spaw[prop.Name] = (int)i;
+                    tasks.Add(Task.Run(() => TaskParallel(prop.Name, (int)i)));
                 }
                 else if (i.Type.ToString() == "Object")
                 {
-                    ParseTreeJObject((JObject)i, spaw, seq, prop.Name);
+                    RunTasks((JObject)i, tasks, prop.Name);
                 }
             }
         }

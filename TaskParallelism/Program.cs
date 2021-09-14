@@ -10,8 +10,8 @@ namespace TaskParallelism
     {
         static void Main(string[] args)
         {
-            string jObjectString = File.ReadAllText("tasks2.json");
-            //string jObjectString = File.ReadAllText(args[0]);
+            //string jObjectString = File.ReadAllText("tasks2.json");
+            string jObjectString = File.ReadAllText(args[0]);
             JObject obj = JObject.Parse(jObjectString);
             List<Task> tasks = new List<Task>();
 

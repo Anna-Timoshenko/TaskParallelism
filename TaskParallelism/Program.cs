@@ -10,8 +10,8 @@ namespace TaskParallelism
     {
         static void Main(string[] args)
         {
-            string jObjectString = File.ReadAllText("tasks.json");
-            //string jObjectString = File.ReadAllText(args[0]);
+            //string jObjectString = File.ReadAllText("tasks2.json");
+            string jObjectString = File.ReadAllText(args[0]);
 
             JObject obj = JObject.Parse(jObjectString);
             List<Task> tasks = new List<Task>();
@@ -36,6 +36,7 @@ namespace TaskParallelism
 
                     if (nameParent == "Sequence")
                     {
+                        check = true;
                         while (!CheckCompletion(tasks))
                         {
                             await Task.WhenAll(tasks.ToArray());
@@ -54,8 +55,6 @@ namespace TaskParallelism
                         tasks.Add(Task.Run(() => RunTasks(prop.Name, duration)));
                         continue;
                     }
-
-                    check = true;
 
                     Task.Run(() => RunTasks(prop.Name, duration));
                 }

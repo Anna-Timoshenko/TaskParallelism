@@ -36,8 +36,8 @@ namespace TaskParallelism
                     if (nameParent == "Sequence")
                     {
                         Task.WaitAll(tasks.ToArray());
-                        //check = false;
-                        await Task.Run(() => TaskSuccessivelyAsync(prop.Name, (int)tokenObj));
+
+                        await Task.Run(() => TaskSuccessivelyAsync(prop.Name, duration));
                         continue;
                     }
 
@@ -52,18 +52,18 @@ namespace TaskParallelism
                 }
                 else if (tokenObj.Type.ToString() == "Object")
                 {
-                    _ = RunTasks((JObject)tokenObj, tasks, prop.Name);
+                    _ = RunTasks((JObject)tokenObj, tasks, prop.Name, check);
                 }
             }
         }
 
-        static Task TaskParallel(string name, int sec)
+        static Task TaskParallel(string name, int duration)
         {
             return Task.Run(async () =>
             {
                 Console.WriteLine($"{name} start");
 
-                for (int i = sec; i >= 0; --i)
+                for (int i = duration; i >= 0; --i)
                 {
                     Console.WriteLine($"{name} {i}");
                     await Task.Delay(TimeSpan.FromSeconds(1));
@@ -73,13 +73,13 @@ namespace TaskParallelism
             });
         }
 
-        static async Task TaskSuccessivelyAsync(string name, int sec)
+        static async Task TaskSuccessivelyAsync(string name, int duration)
         {
             await Task.Run(async () =>
             {
                 Console.WriteLine($"{name} start");
 
-                for (int i = sec; i >= 0; --i)
+                for (int i = duration; i >= 0; --i)
                 {
                     Console.WriteLine($"{name} {i}");
                     await Task.Delay(TimeSpan.FromSeconds(1));

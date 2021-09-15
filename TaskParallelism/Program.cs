@@ -10,17 +10,18 @@ namespace TaskParallelism
     {
         static void Main(string[] args)
         {
-            //string jObjectString = File.ReadAllText("tasks2.json");
-            string jObjectString = File.ReadAllText(args[0]);
+            string jObjectString = File.ReadAllText("tasks.json");
+            //string jObjectString = File.ReadAllText(args[0]);
+
             JObject obj = JObject.Parse(jObjectString);
             List<Task> tasks = new List<Task>();
 
-            _ = RunTasks(obj, tasks);
+            Run(obj, tasks);
 
             Console.ReadKey();
         }
 
-        static async Task RunTasks(JObject obj, List<Task> tasks, string nameParent = null, bool check = false)
+        static async Task Run(JObject obj, List<Task> tasks, string nameParent = null, bool check = false)
         {
             JToken tokenObj;
 
@@ -35,57 +36,60 @@ namespace TaskParallelism
 
                     if (nameParent == "Sequence")
                     {
-                        await Task.WhenAll(tasks.ToArray());
-                        await Task.Run(() => TaskSuccessivelyAsync(prop.Name, duration));
+                        while (!CheckCompletion(tasks))
+                        {
+                            await Task.WhenAll(tasks.ToArray());
+                        }
+
+                        Task task = RunTasks(prop.Name, duration);
+
+                        tasks.Add(task);
+                        await task;
+
                         continue;
                     }
 
                     if (check)
                     {
-                        tasks.Add(Task.Run(() => TaskParallel(prop.Name, duration)));
+                        tasks.Add(Task.Run(() => RunTasks(prop.Name, duration)));
                         continue;
                     }
 
                     check = true;
-                    _ = Task.Run(() => TaskParallel(prop.Name, duration));
+
+                    Task.Run(() => RunTasks(prop.Name, duration));
                 }
-                else if (tokenObj.Type.ToString() == "Object")
+                else
                 {
-                    _ = RunTasks((JObject)tokenObj, tasks, prop.Name, check);
+                    Run((JObject)tokenObj, tasks, prop.Name, check);
                 }
             }
         }
 
-        static Task TaskParallel(string name, int sec)
+        static async Task RunTasks(string name, int duration)
         {
-            return Task.Run(async () =>
+            Console.WriteLine($"{name} start");
+
+            for (int i = duration; i >= 0; --i)
             {
-                Console.WriteLine($"{name} start");
+                Console.WriteLine($"{name} {i}");
+                await Task.Delay(TimeSpan.FromSeconds(1));
+            }
 
-                for (int i = duration; i >= 0; --i)
-                {
-                    Console.WriteLine($"{name} {i}");
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-                }
-
-                Console.WriteLine($"{name} end");
-            });
+            Console.WriteLine($"{name} end");
         }
 
-        static async Task TaskSuccessivelyAsync(string name, int duration)
+        static bool CheckCompletion(List<Task> tasks)
         {
-            await Task.Run(async () =>
+            foreach (var task in tasks)
             {
-                Console.WriteLine($"{name} start");
-
-                for (int i = duration; i >= 0; --i)
+                if (task.Status != TaskStatus.RanToCompletion)
                 {
-                    Console.WriteLine($"{name} {i}");
-                    await Task.Delay(TimeSpan.FromSeconds(1));
+                    return false;
                 }
+            }
 
-                Console.WriteLine($"{name} end");
-            });
+            return true;
         }
     }
 }

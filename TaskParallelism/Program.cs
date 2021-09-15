@@ -10,8 +10,8 @@ namespace TaskParallelism
     {
         static void Main(string[] args)
         {
-            string jObjectString = File.ReadAllText("tasks2.json");
-            //string jObjectString = File.ReadAllText(args[0]);
+            //string jObjectString = File.ReadAllText("tasks2.json");
+            string jObjectString = File.ReadAllText(args[0]);
             JObject obj = JObject.Parse(jObjectString);
             List<Task> tasks = new List<Task>();
 
@@ -35,8 +35,7 @@ namespace TaskParallelism
 
                     if (nameParent == "Sequence")
                     {
-                        Task.WaitAll(tasks.ToArray());
-
+                        await Task.WhenAll(tasks.ToArray());
                         await Task.Run(() => TaskSuccessivelyAsync(prop.Name, duration));
                         continue;
                     }
@@ -57,7 +56,7 @@ namespace TaskParallelism
             }
         }
 
-        static Task TaskParallel(string name, int duration)
+        static Task TaskParallel(string name, int sec)
         {
             return Task.Run(async () =>
             {

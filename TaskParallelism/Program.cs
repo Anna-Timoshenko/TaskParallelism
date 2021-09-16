@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace TaskParallelism
@@ -10,85 +8,54 @@ namespace TaskParallelism
     {
         static void Main(string[] args)
         {
-            //string jObjectString = File.ReadAllText("tasks2.json");
-            string jObjectString = File.ReadAllText(args[0]);
+            string jObjectString = File.ReadAllText("tasks3.json");
+            //string jObjectString = File.ReadAllText(args[0]);
 
             JObject obj = JObject.Parse(jObjectString);
-            List<Task> tasks = new List<Task>();
 
-            Run(obj, tasks);
+            Run(obj);
 
             Console.ReadKey();
         }
 
-        static async Task Run(JObject obj, List<Task> tasks, string nameParent = null, bool check = false)
+        static void Parse(JObject json, INodeContainer node)
         {
-            JToken tokenObj;
+            JToken jToken;
 
-            foreach (var token in obj)
+            foreach (var token in json)
             {
-                tokenObj = obj[token.Key];
-                var prop = (JProperty)tokenObj.Parent;
+                jToken = json[token.Key];
 
-                if (tokenObj.Type.ToString() == "Integer")
+                if (token.Key == "Sequence")
                 {
-                    int duration = (int)tokenObj;
-
-                    if (nameParent == "Sequence")
-                    {
-                        check = true;
-                        while (!CheckCompletion(tasks))
-                        {
-                            await Task.WhenAll(tasks.ToArray());
-                        }
-
-                        Task task = RunTasks(prop.Name, duration);
-
-                        tasks.Add(task);
-                        await task;
-
-                        continue;
-                    }
-
-                    if (check)
-                    {
-                        tasks.Add(Task.Run(() => RunTasks(prop.Name, duration)));
-                        continue;
-                    }
-
-                    Task.Run(() => RunTasks(prop.Name, duration));
+                    Sequence sequence = new Sequence();
+                    node.Tasks.Add(sequence);
+                    Parse((JObject)jToken, sequence);
+                }
+                else if (token.Key == "Spawn")
+                {
+                    Spawn spawn = new Spawn();
+                    node.Tasks.Add(spawn);
+                    Parse((JObject)jToken, spawn);
                 }
                 else
                 {
-                    Run((JObject)tokenObj, tasks, prop.Name, check);
+                    int duration = (int)jToken;
+                    var prop = (JProperty)jToken.Parent;
+
+                    SimpleTask task = new SimpleTask(prop.Name, duration);
+                    node.Tasks.Add(task);
                 }
             }
         }
 
-        static async Task RunTasks(string name, int duration)
+        static void Run(JObject obj)
         {
-            Console.WriteLine($"{name} start");
+            INodeContainer root = new Spawn();
 
-            for (int i = duration; i >= 0; --i)
-            {
-                Console.WriteLine($"{name} {i}");
-                await Task.Delay(TimeSpan.FromSeconds(1));
-            }
+            Parse(obj, root);
 
-            Console.WriteLine($"{name} end");
-        }
-
-        static bool CheckCompletion(List<Task> tasks)
-        {
-            foreach (var task in tasks)
-            {
-                if (task.Status != TaskStatus.RanToCompletion)
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            root.Run();
         }
     }
 }

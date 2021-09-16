@@ -5,26 +5,27 @@ namespace TaskParallelism
 {
     public class SimpleTask : INode
     {
+        private readonly string _name;
+        private readonly int _duration;
+
         public SimpleTask(string name, int duration)
         {
-            Name = name;
-            Duration = duration;
+            _name = name;
+            _duration = duration;
         }
 
-        public string Name { get; set; }
-        public int Duration { get; set; }
-
-        public async Task Run()
+        public async Task RunAsync()
         {
-            Console.WriteLine($"{Name} start");
+            Console.WriteLine($"{_name} start");
 
-            for (int i = Duration; i >= 0; --i)
+            for (int i = _duration; i >= 0; --i)
             {
-                Console.WriteLine($"{Name} {i}");
+                Console.WriteLine($"{_name} {i}");
+
                 await Task.Delay(TimeSpan.FromSeconds(1));
             }
 
-            Console.WriteLine($"{Name} end");
+            Console.WriteLine($"{_name} end");
         }
     }
 }

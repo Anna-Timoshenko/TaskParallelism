@@ -8,9 +8,7 @@ namespace TaskParallelism
     {
         static void Main(string[] args)
         {
-            string jObjectString = File.ReadAllText("tasks3.json");
-            //string jObjectString = File.ReadAllText(args[0]);
-
+            string jObjectString = File.ReadAllText(args[0]);
             JObject obj = JObject.Parse(jObjectString);
 
             Run(obj);
@@ -29,12 +27,14 @@ namespace TaskParallelism
                 if (token.Key == "Sequence")
                 {
                     Sequence sequence = new Sequence();
+
                     node.Tasks.Add(sequence);
                     Parse((JObject)jToken, sequence);
                 }
                 else if (token.Key == "Spawn")
                 {
                     Spawn spawn = new Spawn();
+
                     node.Tasks.Add(spawn);
                     Parse((JObject)jToken, spawn);
                 }
@@ -42,8 +42,8 @@ namespace TaskParallelism
                 {
                     int duration = (int)jToken;
                     var prop = (JProperty)jToken.Parent;
-
                     SimpleTask task = new SimpleTask(prop.Name, duration);
+
                     node.Tasks.Add(task);
                 }
             }
@@ -55,7 +55,7 @@ namespace TaskParallelism
 
             Parse(obj, root);
 
-            root.Run();
+            root.RunAsync();
         }
     }
 }

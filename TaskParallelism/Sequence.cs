@@ -10,13 +10,13 @@ namespace TaskParallelism
             Tasks = new List<INode>();
         }
 
-        public List<INode> Tasks { get; set; }
+        public ICollection<INode> Tasks { get; set; }
 
-        public async Task Run()
+        public async Task RunAsync()
         {
-            foreach (var item in Tasks)
+            foreach (var task in Tasks)
             {
-                await item.Run();
+                await task.RunAsync();
             }
         }
     }

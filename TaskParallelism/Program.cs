@@ -9,7 +9,7 @@ namespace TaskParallelism
         static void Main(string[] args)
         {
             string jObjectString = File.ReadAllText(args[0]);
-            JObject obj = JObject.Parse(jObjectString);
+            JObject json = JObject.Parse(jObjectString);
 
             Run(json);
 
@@ -49,11 +49,11 @@ namespace TaskParallelism
             }
         }
 
-        static void Run(JObject obj)
+        static void Run(JObject json)
         {
             INodeContainer root = new Spawn();
 
-            Parse(obj, root);
+            Parse(json, root);
 
             root.RunAsync();
         }
